@@ -1,5 +1,7 @@
 package com.postman.calendit.service;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -11,13 +13,16 @@ import java.util.stream.Collectors;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.postman.calendit.converter.EventConverter;
 import com.postman.calendit.dto.BookingDTO;
+import com.postman.calendit.dto.EventDTO;
 import com.postman.calendit.dto.SlotDTO;
 import com.postman.calendit.model.Booking;
 import com.postman.calendit.model.Slot;
 import com.postman.calendit.model.User;
 import com.postman.calendit.repository.BookingRepository;
 import com.postman.calendit.repository.UserRepository;
+import com.postman.calendit.util.Constants;
 
 @Service
 public class CalenditBookingService implements BookingService {
@@ -33,12 +38,18 @@ public class CalenditBookingService implements BookingService {
 
   @Autowired
   SequenceGeneratorService sequenceService;
+  
+  @Autowired
+  GoogleCalendarService googleCalendarService;
+  
+  @Autowired
+  EventConverter eventConverter;
 
   @Autowired
   ReentrantReadWriteLock lock;
 
   @Override
-  public BookingDTO bookSlot(String slotId, String owner, String requestor) {
+  public String bookSlot(String slotId, String owner, String requestor, String accessToken) throws GeneralSecurityException, IOException {
     User user = userRepository.findById(owner).orElse(null);
     Set<Slot> openSlots = user.getOpenSlots();
     Slot slotToBeBooked =
@@ -48,8 +59,10 @@ public class CalenditBookingService implements BookingService {
     String bookingId = sequenceService.getBookingId(requestor);
     Booking booking = new Booking(bookingId, requestor, owner, slotToBeBooked);
     openSlots.remove(slotToBeBooked);
+    String htmlLink = googleCalendarService.addGoogleCalendarEntry(accessToken, booking);
     userRepository.save(user);
-    return modelMapper.map(bookingRepository.save(booking), BookingDTO.class);
+    bookingRepository.save(booking);
+    return htmlLink + Constants.BOOKING_ID + bookingId;
   }
 
   @Override
@@ -84,20 +97,18 @@ public class CalenditBookingService implements BookingService {
   }
 
   @Override
-  public BookingDTO removeBooking(String bookingId) {
+  public BookingDTO removeBooking(String bookingId, String accessToken) throws GeneralSecurityException, IOException {
     Booking booking = bookingRepository.findById(bookingId).orElse(null);
     if(booking==null)
       throw new IllegalArgumentException("Invalid booking");
+    googleCalendarService.removeEvent(bookingId, accessToken);
     bookingRepository.deleteById(bookingId);
     return modelMapper.map(booking, BookingDTO.class);
   }
 
   @Override
-  public List<BookingDTO> listBookings(String userId) {
-    List<Booking> bookings = bookingRepository.findByRequestor(userId);
-    return bookings.stream().map(booking -> modelMapper.map(booking, BookingDTO.class))
-        .sorted((b1, b2) -> b1.getSlot().getStart().compareTo(b1.getSlot().getStart()))
-        .collect(Collectors.toList());
+  public List<EventDTO> listBookings(String accessToken) throws GeneralSecurityException, IOException {
+    return googleCalendarService.getEventsList(accessToken).stream().map(event -> eventConverter.convert(event)).collect(Collectors.toList());
   }
 
 }
