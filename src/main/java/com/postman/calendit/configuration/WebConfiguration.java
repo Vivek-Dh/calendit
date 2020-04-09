@@ -7,11 +7,13 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import com.postman.calendit.exception.RestAuthenticationEntryPoint;
 
 @Configuration
 @EnableWebSecurity(debug = true)
+@EnableOAuth2Client
 @Order(1)
 public class WebConfiguration extends WebSecurityConfigurerAdapter {
 
