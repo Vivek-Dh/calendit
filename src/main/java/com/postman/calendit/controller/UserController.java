@@ -29,6 +29,7 @@ public class UserController {
     String name = principal.getName();
     if(!userService.checkIfUserExists(id)) {
       model.addAttribute("registeredUser", userService.registerUser(id, name));
+      System.out.println("Registered user : " + id + " " + name);
     }
     return "index";
   }

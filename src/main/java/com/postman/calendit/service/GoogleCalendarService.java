@@ -14,6 +14,7 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.Calendar.Events.Delete;
+import com.google.api.services.calendar.Calendar.Events.Update;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
@@ -56,11 +57,19 @@ public class GoogleCalendarService {
     GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
     Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
         .setApplicationName(APPLICATION).build();
+    System.out.println("Removing event with id : "+id);
     Delete dd = service.events().delete(CALENDARID, id);
     dd.execute();
   }
 
   private String createEvent(Calendar service, Booking booking) throws IOException {
+    Event existingEvent = null;
+    try{
+      existingEvent = service.events().get(CALENDARID, booking.getId()).execute();
+    }
+    catch(Exception e) {
+      //event does not exist
+    }
     Event event = new Event().setSummary("Calendit Meeting").setLocation("Online")
         .setDescription(
             "Meeting between : " + booking.getRequestor() + " and " + booking.getOwner())
@@ -92,8 +101,14 @@ public class GoogleCalendarService {
     Event.Reminders reminders =
         new Event.Reminders().setUseDefault(false).setOverrides(Arrays.asList(reminderOverrides));
     event.setReminders(reminders);
-
-    event = service.events().insert(CALENDARID, event).execute();
+    Update update = null;
+    System.out.println("Creating event with event id : " + event.getId());
+    if(existingEvent==null) {
+       event = service.events().insert(CALENDARID, event).execute();
+    }
+    else {
+       event = service.events().update(CALENDARID, existingEvent.getId(), event).execute();
+    }
     System.out.printf("Event created: %s\n", event.getHtmlLink());
     return event.getHtmlLink();
   }
