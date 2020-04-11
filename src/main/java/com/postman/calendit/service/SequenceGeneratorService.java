@@ -26,6 +26,6 @@ public class SequenceGeneratorService {
   }
   
   public String getBookingId(String userId) {
-    return userId.replaceAll("[^a-z0-9]", "") + String.valueOf(bookingRepository.findByRequestor(userId).size() + 1);
+    return userId.replaceAll("[^a-v0-9]", "") + String.valueOf(bookingRepository.findByRequestor(userId).size() + 1);
   }
 }

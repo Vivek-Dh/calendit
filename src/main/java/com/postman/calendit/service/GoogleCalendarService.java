@@ -57,6 +57,7 @@ public class GoogleCalendarService {
     GoogleCredential credential = new GoogleCredential().setAccessToken(accessToken);
     Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
         .setApplicationName(APPLICATION).build();
+    System.out.println("Removing event with id : "+id);
     Delete dd = service.events().delete(CALENDARID, id);
     dd.execute();
   }
@@ -101,6 +102,7 @@ public class GoogleCalendarService {
         new Event.Reminders().setUseDefault(false).setOverrides(Arrays.asList(reminderOverrides));
     event.setReminders(reminders);
     Update update = null;
+    System.out.println("Creating event with event id : " + event.getId());
     if(existingEvent==null) {
        event = service.events().insert(CALENDARID, event).execute();
     }
