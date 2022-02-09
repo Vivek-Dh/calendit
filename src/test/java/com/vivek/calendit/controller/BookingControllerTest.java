@@ -1,9 +1,9 @@
-package com.postman.calendit.controller;
+package com.vivek.calendit.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -11,7 +11,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.assertj.core.util.Arrays;
+
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -23,20 +24,23 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.postman.calendit.configuration.mock.WithMockCustomUser;
-import com.postman.calendit.dto.BookingDTO;
-import com.postman.calendit.dto.EventDTO;
-import com.postman.calendit.dto.SlotDTO;
-import com.postman.calendit.service.CalenditBookingService;
-import com.postman.calendit.util.AccessTokenUtil;
-import com.postman.calendit.util.Constants;
+import com.vivek.calendit.configuration.mock.WithMockCustomUser;
+import com.vivek.calendit.dto.BookingDTO;
+import com.vivek.calendit.dto.EventDTO;
+import com.vivek.calendit.dto.SlotDTO;
+import com.vivek.calendit.service.CalenditBookingService;
+import com.vivek.calendit.util.AccessTokenUtil;
+import com.vivek.calendit.util.Constants;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -60,7 +64,7 @@ public class BookingControllerTest {
 
   @BeforeEach
   public void setup() {
-    mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(springSecurity()).build();
+    mockMvc = MockMvcBuilders.webAppContextSetup(context).apply(SecurityMockMvcConfigurers.springSecurity()).build();
     mapper.findAndRegisterModules();
     mapper.registerModule(new JavaTimeModule());
   }
@@ -76,11 +80,11 @@ public class BookingControllerTest {
     slot.setId("slot1");
     Mockito.when(calenditBookingService.addSlot(Mockito.anyString(), Mockito.any(LocalDate.class),
         Mockito.any(LocalTime.class))).thenReturn(slot);
-    MvcResult result = this.mockMvc.perform(get("/booking/addslot?date=23-05-2020&time=14:00"))
-        .andExpect(status().isOk()).andReturn();
+    MvcResult result = this.mockMvc.perform(MockMvcRequestBuilders.get("/booking/addslot?date=23-05-2020&time=14:00"))
+        .andExpect(MockMvcResultMatchers.status().isOk()).andReturn();
     SlotDTO actual = mapper.readValue(result.getResponse().getContentAsString(),
         new TypeReference<SlotDTO>() {});
-    assertEquals(slot, actual);
+    Assertions.assertEquals(slot, actual);
   }
   
   @Test
@@ -96,11 +100,11 @@ public class BookingControllerTest {
     slotDTO2.setEnd(LocalDateTime.now().plusHours(2));
     Set<SlotDTO> slots=  new HashSet<>();
     Mockito.when(calenditBookingService.listSlots(Mockito.anyString())).thenReturn(slots);
-    MvcResult result = this.mockMvc.perform(get("/booking/listslots?owner=mockowner"))
-        .andExpect(status().isOk()).andReturn();
+    MvcResult result = this.mockMvc.perform(MockMvcRequestBuilders.get("/booking/listslots?owner=mockowner"))
+        .andExpect(MockMvcResultMatchers.status().isOk()).andReturn();
     Set<SlotDTO> actual = mapper.readValue(result.getResponse().getContentAsString(),
         new TypeReference<Set<SlotDTO>>() {});
-    assertEquals(slots, actual);
+    Assertions.assertEquals(slots, actual);
   }
   
   @Test
@@ -109,10 +113,10 @@ public class BookingControllerTest {
     String booking = "test booking";
     Mockito.when(accessTokenUtil.getAccessToken(Mockito.any(OAuth2AuthorizedClientService.class), Mockito.any(OAuth2AuthenticationToken.class))).thenReturn("mocktoken");
     Mockito.when(calenditBookingService.bookSlot(Mockito.anyString(), Mockito.anyString(), Mockito.anyString(), Mockito.anyString())).thenReturn(booking);
-    MvcResult result = this.mockMvc.perform(get("/booking/bookslot?slotId=1&owner=mockowner"))
-        .andExpect(status().isOk()).andReturn();
+    MvcResult result = this.mockMvc.perform(MockMvcRequestBuilders.get("/booking/bookslot?slotId=1&owner=mockowner"))
+        .andExpect(MockMvcResultMatchers.status().isOk()).andReturn();
     String actual = result.getResponse().getContentAsString();
-    assertEquals(Constants.BOOKING_CONFIRMED+booking, actual);
+    Assertions.assertEquals(Constants.BOOKING_CONFIRMED+booking, actual);
   }
   
   @Test
@@ -123,10 +127,10 @@ public class BookingControllerTest {
     slotDTO1.setStart(LocalDateTime.now());
     slotDTO1.setEnd(LocalDateTime.now().plusHours(1));
     Mockito.when(calenditBookingService.removeSlot(Mockito.anyString(), Mockito.anyString())).thenReturn(slotDTO1);
-    MvcResult result = this.mockMvc.perform(get("/booking/removeslot?slotId=1"))
-        .andExpect(status().isOk()).andReturn();
+    MvcResult result = this.mockMvc.perform(MockMvcRequestBuilders.get("/booking/removeslot?slotId=1"))
+        .andExpect(MockMvcResultMatchers.status().isOk()).andReturn();
     String actual = result.getResponse().getContentAsString();
-    assertEquals(String.format(Constants.SLOT_REMOVED,slotDTO1), actual);
+    Assertions.assertEquals(String.format(Constants.SLOT_REMOVED,slotDTO1), actual);
   }
   
   @Test
@@ -139,10 +143,10 @@ public class BookingControllerTest {
     booking.setSlot(null);
     Mockito.when(accessTokenUtil.getAccessToken(Mockito.any(OAuth2AuthorizedClientService.class), Mockito.any(OAuth2AuthenticationToken.class))).thenReturn("mocktoken");
     Mockito.when(calenditBookingService.removeBooking(Mockito.anyString(), Mockito.anyString())).thenReturn(booking);
-    MvcResult result = this.mockMvc.perform(get("/booking/removebooking?bookingId=1"))
-        .andExpect(status().isOk()).andReturn();
+    MvcResult result = this.mockMvc.perform(MockMvcRequestBuilders.get("/booking/removebooking?bookingId=1"))
+        .andExpect(MockMvcResultMatchers.status().isOk()).andReturn();
     String actual = result.getResponse().getContentAsString();
-    assertEquals(String.format(Constants.BOOKING_REMOVED,booking), actual);
+    Assertions.assertEquals(String.format(Constants.BOOKING_REMOVED,booking), actual);
   }
   
   @Test
@@ -157,11 +161,11 @@ public class BookingControllerTest {
     events.add(event2);
     Mockito.when(accessTokenUtil.getAccessToken(Mockito.any(OAuth2AuthorizedClientService.class), Mockito.any(OAuth2AuthenticationToken.class))).thenReturn("mocktoken");
     Mockito.when(calenditBookingService.listBookings(Mockito.anyString())).thenReturn(events);
-    MvcResult result = this.mockMvc.perform(get("/booking/listbookings"))
-        .andExpect(status().isOk()).andReturn();
+    MvcResult result = this.mockMvc.perform(MockMvcRequestBuilders.get("/booking/listbookings"))
+        .andExpect(MockMvcResultMatchers.status().isOk()).andReturn();
     List<EventDTO> actual = mapper.readValue(result.getResponse().getContentAsString(),
         new TypeReference<List<EventDTO>>() {});
-    assertEquals(events, actual);
+    Assertions.assertEquals(events, actual);
   }
   
   @Test
@@ -176,7 +180,7 @@ public class BookingControllerTest {
     slotDTO2.setEnd(LocalDateTime.now().plusHours(2));
     Set<SlotDTO> slots=  new HashSet<>();
     Mockito.when(calenditBookingService.listSlots(Mockito.anyString())).thenReturn(slots);
-    MvcResult result = this.mockMvc.perform(get("/booking/listslots?owner=mockowner"))
-        .andExpect(status().isUnauthorized()).andReturn();
+    MvcResult result = this.mockMvc.perform(MockMvcRequestBuilders.get("/booking/listslots?owner=mockowner"))
+        .andExpect(MockMvcResultMatchers.status().isUnauthorized()).andReturn();
   }
 }

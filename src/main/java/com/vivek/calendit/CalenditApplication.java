@@ -1,4 +1,4 @@
-package com.postman.calendit;
+package com.vivek.calendit;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.modelmapper.ModelMapper;
